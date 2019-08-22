@@ -1,0 +1,92 @@
+<html>
+  <head>
+    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-router-dom/umd/react-router-dom.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js'></script>
+  </head>
+  <style>
+    nav{
+      display: flex;
+      justify-content: space-around;
+    }
+  </style>
+  <body>
+    <div id='titleBar'>
+      <h1>Acme Product Averages React</h1>
+    </div>
+    <div id='root'></div>
+
+    <script type='text/babel'>
+      const { Component } = React;
+      const { render } = ReactDOM;
+      const { Switch, Link, Route, HashRouter, Redirect } = ReactRouterDOM;
+
+      const Nav = ({ companies, path })=> {
+        const links = [
+          { to: '/', text: 'Home', selected: path === '/' },
+          { to: '/products', text: `Products`, selected: path.startsWith('/products')},
+        ];
+        return (
+          <nav>
+            {
+              links.map( (link, idx) => <Link key={ idx } to={ link.to } className={ link.selected ? 'selected': ''}>{ link.text }</Link>)
+            }
+          </nav>
+        );
+      };
+    
+      const Home = ({ products, offerings })=> {
+        return products && offerings ?
+          <div id='home'>
+            <h2>Home</h2>
+            <div>We have { products.length } products with an average price of ${ 
+              Math.floor( offerings.reduce(( acc, offering )=> {
+                acc += offering.price;
+                return acc;
+              }, 0) / offerings.length * 100) / 100
+            }</div>
+          </div>
+        :
+          null
+      }
+      
+      class App extends Component{
+        constructor(){
+          super();
+          this.state = {
+            companies: []
+          };
+        }
+        async componentDidMount(){
+          const urls = [
+            'https://acme-users-api-rev.herokuapp.com/api/products',
+            'https://acme-users-api-rev.herokuapp.com/api/companies',
+            'https://acme-users-api-rev.herokuapp.com/api/offerings'
+          ];
+          const responses = await Promise.all(urls.map(url => axios.get(url)));
+          const [products, companies, offerings ] = responses.map(response => response.data);
+
+          this.setState({companies, products, offerings});
+        }
+        render(){
+          const { companies, products, offerings } = this.state;
+          return (
+            <HashRouter>
+              <Route render={({ location })=> <Nav path={ location.pathname } products={ products } />} />
+              <Switch>
+                <Route exact path='/' render= { (props)=> <Home {...props} products={ products } offerings={ offerings }/> } />
+                <Route path='/products' render={ (props)=> <Products {...props} products={ products } companies={ companies} offering={ offerings } /> } />
+              </Switch>
+            </HashRouter>
+          );
+        }
+      }
+      const root = document.querySelector('#root');
+
+      render(<App />, root);
+    </script>
+  </body>
+</html>
