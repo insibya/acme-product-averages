@@ -99,7 +99,9 @@
         constructor(){
           super();
           this.state = {
-            companies: []
+            companies: [],
+            products: [],
+            offerings: []
           };
         }
         async componentDidMount(){
@@ -109,9 +111,9 @@
             'https://acme-users-api-rev.herokuapp.com/api/offerings'
           ];
           const responses = await Promise.all(urls.map(url => axios.get(url)));
-          const [products, companies, offerings ] = responses.map(response => response.data);
+          const [ products, companies, offerings ] = responses.map(response => response.data);
 
-          this.setState({companies, products, offerings});
+          this.setState({ companies, products, offerings });
         }
         render(){
           const { companies, products, offerings } = this.state;
