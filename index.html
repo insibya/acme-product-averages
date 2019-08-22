@@ -12,6 +12,12 @@
       display: flex;
       justify-content: space-around;
     }
+    nav a {
+      padding: 5px;
+    }
+    .selected{
+      border: solid 1px black;
+    }
   </style>
   <body>
     <div id='titleBar'>
@@ -53,6 +59,42 @@
           null
       }
       
+      const Products = ({ products, companies, offerings })=> {
+        let lowBidder = "";
+        return products && companies && offerings ?
+          <div id='products'>
+            <ul>
+              {
+                products.map( product => <li
+                  key = { product.id }>
+                  <div>Product: { product.name }</div>
+                  <div>Suggested Price: { product.suggestedPrice }</div>
+                  <div>Average Price: {
+                    Math.floor( offerings.filter(offering => offering.productId === product.id)
+                      .reduce(( acc, offering )=> {
+                        acc += offering.price;
+                        return acc;
+                    }, 0) / offerings.filter(offering => offering.productId === product.id).length * 100) / 100
+                  }</div>
+                  <div>Lowest Price: {
+                    Math.floor( offerings.filter(offering => offering.productId === product.id)
+                      .reduce(( acc, offering )=> {
+                        if (offering.price < acc) {
+                          acc = offering.price;
+                          lowBidder = companies.find(company => company.id === offering.companyId).name;
+                        }
+                        return acc;
+                      }, Infinity) * 100 ) / 100
+                  } offered by { lowBidder }</div>
+                  <hr/>
+                </li>)
+              }
+            </ul>
+          </div>
+        :
+          null
+      }
+      
       class App extends Component{
         constructor(){
           super();
@@ -78,7 +120,7 @@
               <Route render={({ location })=> <Nav path={ location.pathname } products={ products } />} />
               <Switch>
                 <Route exact path='/' render= { (props)=> <Home {...props} products={ products } offerings={ offerings }/> } />
-                <Route path='/products' render={ (props)=> <Products {...props} products={ products } companies={ companies} offering={ offerings } /> } />
+                <Route path='/products' render={ (props)=> <Products {...props} products={ products } companies={ companies} offerings={ offerings } /> } />
               </Switch>
             </HashRouter>
           );
